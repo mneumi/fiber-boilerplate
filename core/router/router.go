@@ -6,7 +6,7 @@ import (
 	v1 "fiber-boilerplate/core/handler/v1"
 )
 
-func NewRouter(app *fiber.App) {
+func BindRouter(app *fiber.App) {
 	tag := v1.NewTag()
 	article := v1.NewArticle()
 
