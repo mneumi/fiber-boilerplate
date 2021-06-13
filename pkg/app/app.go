@@ -3,8 +3,10 @@ package app
 import (
 	"fiber-boilerplate/pkg/global"
 	"fiber-boilerplate/pkg/initial"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 func Bootstrap() {
@@ -24,5 +26,9 @@ func catchUnknownError(ctx *fiber.Ctx, err error) error {
 		code = e.Code
 	}
 
-	return ctx.Status(code).SendString("Uncatch Error")
+	zap.S().Errorf("Uncatch Error: %v", err.Error())
+
+	return ctx.Status(code).JSON(fiber.Map{
+		"msg": fmt.Sprintf("Uncatch Error: %s", err.Error()),
+	})
 }

@@ -1,8 +1,8 @@
 Server:
   RunMode: debug
   HttpPort: 8050
-  ReadTimeout: 60
-  WriteTimeout: 60
+  ReadTimeout: 3
+  WriteTimeout: 3
 
 App:
   DefaultPageSize: 10
@@ -23,6 +23,7 @@ Database:
 
 Logger:
   FilePath: ./output/log/log.txt
+  CommonPath: ./output/log/common/common-log.txt
   MaxSize: 1
   MaxBackups: 30
   MaxAge: 30

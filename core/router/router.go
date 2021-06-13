@@ -3,7 +3,9 @@ package router
 import (
 	"github.com/gofiber/fiber/v2"
 
+	"fiber-boilerplate/core/dto"
 	v1 "fiber-boilerplate/core/handler/v1"
+	"fiber-boilerplate/core/middleware"
 )
 
 func BindRouter(app *fiber.App) {
@@ -12,7 +14,11 @@ func BindRouter(app *fiber.App) {
 
 	apiv1 := app.Group("/api/v1")
 	{
-		apiv1.Post("/tags", tag.Create)
+		apiv1.Get("/", func(ctx *fiber.Ctx) error {
+			panic("I'm an error")
+		})
+
+		apiv1.Post("/tags", middleware.Validate(&dto.UserDto{}), tag.Create)
 		apiv1.Delete("/tags/:id", tag.Delete)
 		apiv1.Put("/tags/:id", tag.Update)
 		apiv1.Patch("/tags/:id/state", tag.Update)

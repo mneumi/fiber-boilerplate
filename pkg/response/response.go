@@ -17,27 +17,21 @@ type Pager struct {
 	TotalRows int `json:"total_rows"`
 }
 
-func NewResponse(ctx *fiber.Ctx) *Response {
+func New(ctx *fiber.Ctx) *Response {
 	return &Response{Ctx: ctx}
 }
 
-func (r *Response) ToResponse(data interface{}) error {
-	if data == nil {
-		data = fiber.Map{}
+func (r *Response) ToResponse(detail interface{}) error {
+	ret := fiber.Map{
+		"code": 0,
+		"msg":  "成功",
 	}
 
-	return r.Ctx.Status(fiber.StatusOK).JSON(data)
-}
+	if detail != nil {
+		ret["details"] = detail
+	}
 
-func (r *Response) ToResponseList(list interface{}, totalRows int) error {
-	return r.Ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"list": list,
-		"pager": Pager{
-			Page:      pagintation.GetPage(r.Ctx),
-			PageSize:  pagintation.GetPageSize(r.Ctx),
-			TotalRows: totalRows,
-		},
-	})
+	return r.Ctx.Status(fiber.StatusOK).JSON(ret)
 }
 
 func (r *Response) ToErrorResponse(err *errcode.Error) error {
@@ -55,4 +49,15 @@ func (r *Response) ToErrorResponse(err *errcode.Error) error {
 	r.Ctx.Status(err.StatusCode()).JSON(response)
 
 	return nil
+}
+
+func (r *Response) ToResponseList(list interface{}, totalRows int) error {
+	return r.Ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"list": list,
+		"pager": Pager{
+			Page:      pagintation.GetPage(r.Ctx),
+			PageSize:  pagintation.GetPageSize(r.Ctx),
+			TotalRows: totalRows,
+		},
+	})
 }

@@ -27,6 +27,14 @@ func (e *Error) GetDetails() []string {
 	return e.Details
 }
 
+func (e *Error) WithDetails(details ...string) *Error {
+	newError := *e
+	newError.Details = []string{}
+	newError.Details = append(newError.Details, details...)
+
+	return &newError
+}
+
 var codes = map[int]string{}
 
 func NewError(code int, msg string) *Error {
@@ -41,8 +49,6 @@ func NewError(code int, msg string) *Error {
 
 func (e *Error) StatusCode() int {
 	switch e.GetCode() {
-	case Success.GetCode():
-		return http.StatusOK
 	case ServerError.GetCode():
 		return http.StatusInternalServerError
 	case InvalidParams.GetCode():
