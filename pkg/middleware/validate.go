@@ -12,6 +12,7 @@ import (
 
 func Validate(dto interface{}) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+		// validate body
 		if err := ctx.BodyParser(dto); err != nil {
 			return response.New(ctx).
 				ToErrorResponse(errcode.InvalidParams.

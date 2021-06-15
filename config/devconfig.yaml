@@ -1,0 +1,46 @@
+server:
+  runMode: debug
+  httpPort: 8050
+  readTimeout: 3
+  writeTimeout: 3
+
+app:
+  defaultPageSize: 10
+  maxPageSize: 100
+
+database:
+  dbType: mysql
+  username: root
+  password: 123456
+  port: 3306
+  dbName: fiber
+  charset: utf8mb4
+  loc: Local
+  parseTime: true
+  maxIdleConns: 10
+  maxOpenConns: 30
+
+logger:
+  filePath: ./output/custom/custom.log
+  commonPath: ./output/log/access/access.log
+  maxSize: 1
+  maxBackups: 30
+  maxAge: 30
+  compress: false
+  localTime: true
+
+routerLimiter:
+  rules:
+    - path: /api/v1/tags
+      interval: 60
+      capacity: 20
+      quantum: 30
+    - path: /api/v1/user
+      interval: 301
+      capacity: 101
+      quantum: 301
+
+jwt:
+  secret: abcdefg
+  issuer: dev
+  expire: 7200

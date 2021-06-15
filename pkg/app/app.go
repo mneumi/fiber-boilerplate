@@ -24,9 +24,9 @@ func catchUnknownError(ctx *fiber.Ctx, err error) error {
 
 	if e, ok := err.(*fiber.Error); ok {
 		code = e.Code
+	} else {
+		zap.S().Errorf("Uncatch Error: %v", err.Error())
 	}
-
-	zap.S().Errorf("Uncatch Error: %v", err.Error())
 
 	return ctx.Status(code).JSON(fiber.Map{
 		"msg": fmt.Sprintf("Uncatch Error: %s", err.Error()),

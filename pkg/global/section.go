@@ -38,3 +38,20 @@ type LoggerSettingSection struct {
 	Compress   bool
 	LocalTime  bool
 }
+
+type RouterLimiterSection struct {
+	Rules []RouterLimiterItem
+}
+
+type RouterLimiterItem struct {
+	Path     string
+	Interval int64
+	Capacity int64
+	Quantum  int64
+}
+
+type JWTSettingSection struct {
+	Secret string
+	Issuer string
+	Expire int
+}

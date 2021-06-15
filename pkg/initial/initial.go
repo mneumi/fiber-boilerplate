@@ -2,36 +2,49 @@ package initial
 
 import (
 	"fmt"
-	"runtime"
+	"os"
+	"os/signal"
 	"time"
 
 	"fiber-boilerplate/core/dao"
 	"fiber-boilerplate/core/model"
 	"fiber-boilerplate/core/router"
-	"fiber-boilerplate/pkg/errcode"
 	"fiber-boilerplate/pkg/global"
 	"fiber-boilerplate/pkg/logger"
-	"fiber-boilerplate/pkg/response"
+	"fiber-boilerplate/pkg/middleware"
 	"fiber-boilerplate/pkg/setting"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
-	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"go.uber.org/zap"
 )
 
 func InitApp(app *fiber.App) {
 	global.App = app
 
 	initSetting()
+	initGracefulShutdown()
 	initServer()
 	initValidator()
 	initLogger()
 	initDB()
+	initSnowflakeNode()
 	initMiddleware()
 	initRouter()
+}
+
+func initGracefulShutdown() {
+	// 新建管道
+	ch := make(chan os.Signal, 1)
+	// 注册事件，关闭程序时，向管道发送一个信号
+	signal.Notify(ch, os.Interrupt)
+
+	go func() {
+		// 阻塞等待信号
+		<-ch
+		fmt.Println("Gracefully shutdown ...")
+		_ = global.App.Shutdown()
+	}()
 }
 
 func initSetting() {
@@ -40,22 +53,32 @@ func initSetting() {
 		panic(err)
 	}
 
-	err = setting.ReadSection("Server", &global.ServerSetting)
+	err = setting.ReadSection("server", &global.ServerSetting)
 	if err != nil {
 		panic(err)
 	}
 
-	err = setting.ReadSection("App", &global.AppSetting)
+	err = setting.ReadSection("app", &global.AppSetting)
 	if err != nil {
 		panic(err)
 	}
 
-	err = setting.ReadSection("Database", &global.DatabaseSetting)
+	err = setting.ReadSection("database", &global.DatabaseSetting)
 	if err != nil {
 		panic(err)
 	}
 
-	err = setting.ReadSection("Logger", &global.LoggerSetting)
+	err = setting.ReadSection("logger", &global.LoggerSetting)
+	if err != nil {
+		panic(err)
+	}
+
+	err = setting.ReadSection("routerLimiter", &global.RouterLimiter)
+	if err != nil {
+		panic(err)
+	}
+
+	err = setting.ReadSection("jwt", &global.JWTSetting)
 	if err != nil {
 		panic(err)
 	}
@@ -95,59 +118,21 @@ func initLogger() {
 	logger.InitLogger(global.LoggerSetting)
 }
 
+func initSnowflakeNode() {
+	var err error
+	global.SnowflakeNode, err = snowflake.NewNode(1)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
 func initMiddleware() {
-	global.App.Use(newRecoveryMiddleware())
-	global.App.Use(newLimiterMiddleware())
-	global.App.Use(newAppInfo())
-	global.App.Use(cors.New())
-	global.App.Use(requestid.New())
-	global.App.Use(logger.New())
-}
-
-func newLimiterMiddleware() fiber.Handler {
-	return limiter.New(limiter.Config{
-		Next: func(c *fiber.Ctx) bool {
-			return c.IP() == "127.0.0.1"
-		},
-		Max:        30,
-		Expiration: 30 * time.Second,
-		KeyGenerator: func(c *fiber.Ctx) string {
-			return c.IP()
-		},
-		LimitReached: func(c *fiber.Ctx) error {
-			return c.SendStatus(fiber.StatusTooManyRequests)
-		},
-	})
-}
-
-func newRecoveryMiddleware() fiber.Handler {
-	return func(ctx *fiber.Ctx) (err error) {
-		defer func() {
-			if e := recover(); e != nil {
-				buf := make([]byte, 2048)
-				buf = buf[:runtime.Stack(buf, false)]
-
-				zap.S().Errorf("%v>>%s\n", e, buf)
-
-				// 判断是否是内部已定义错误
-				if _, ok := e.(*errcode.Error); ok {
-					response.New(ctx).ToErrorResponse(e.(*errcode.Error))
-				} else {
-					// 不是已定义错误，交给统一错误处理
-					err = fmt.Errorf("%v", e)
-				}
-			}
-		}()
-
-		return ctx.Next()
-	}
-}
-
-func newAppInfo() fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
-		ctx.Locals("version", "1.0.0")
-		ctx.Locals("app_name", "fiber-boilerplate")
-
-		return ctx.Next()
-	}
+	global.App.Use(middleware.NewRecovery())
+	global.App.Use(middleware.NewAttackLimiter())
+	global.App.Use(middleware.NewRouterLimiter())
+	global.App.Use(middleware.NewCors())
+	global.App.Use(middleware.NewAppInfo())
+	global.App.Use(middleware.NewRequestID())
+	global.App.Use(middleware.NewAccessLogger())
 }

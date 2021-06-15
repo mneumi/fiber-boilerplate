@@ -1,19 +1,23 @@
 package setting
 
-import "github.com/spf13/viper"
+import (
+	"fiber-boilerplate/pkg/global"
+	"strings"
+
+	"github.com/spf13/viper"
+)
 
 type Setting struct {
 	vp *viper.Viper
 }
 
 func NewSetting() (*Setting, error) {
-	vp := viper.New()
+	reader := strings.NewReader(global.DevConfigYAMLContent)
 
-	vp.AddConfigPath("config/")
-	vp.SetConfigName("config")
+	vp := viper.New()
 	vp.SetConfigType("yaml")
 
-	err := vp.ReadInConfig()
+	err := vp.ReadConfig(reader)
 
 	if err != nil {
 		return nil, err
