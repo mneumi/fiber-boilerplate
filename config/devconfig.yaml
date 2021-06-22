@@ -13,7 +13,7 @@ database:
   username: root
   password: 123456
   port: 3306
-  dbName: fiber
+  dbName: xcar
   charset: utf8mb4
   loc: Local
   parseTime: true

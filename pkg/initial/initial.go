@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"fiber-boilerplate/core/dao"
-	"fiber-boilerplate/core/model"
 	"fiber-boilerplate/core/router"
 	"fiber-boilerplate/pkg/global"
 	"fiber-boilerplate/pkg/logger"
@@ -106,10 +105,6 @@ func initDB() {
 	if err != nil {
 		panic(err)
 	}
-
-	db.AutoMigrate(&model.Article{})
-	db.AutoMigrate(&model.Tag{})
-	db.AutoMigrate(&model.ArticleTag{})
 
 	global.DB = db
 }
